@@ -3,73 +3,72 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <meta name="theme-color" content="#14161b" />
+  <meta name="theme-color" content="#0e1015" />
   <title>AI Chatroom</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link
-    href="https://fonts.googleapis.com/css2?family=Fragment+Mono&family=Schibsted+Grotesk:wght@400..700&display=swap"
+    href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@300..700&family=Fragment+Mono&display=swap"
     rel="stylesheet"
   />
   <link rel="stylesheet" href="/style.css" />
 </head>
 <body>
-  <aside id="sidebar">
-    <header class="side-header">
-      <h1>AI Chatroom</h1>
-      <div id="status-line">
-        <span id="status-dot" class="dot paused"></span>
-        <span id="status-text">Paused</span>
-      </div>
-    </header>
+  <header id="topbar">
+    <span class="brand">AI&nbsp;Chatroom</span>
+    <span class="pill" id="status-chip">
+      <span class="d" id="status-dot"></span>
+      <b id="status-text">Standby</b>
+    </span>
+    <span class="pill turns" id="turn-counter" hidden></span>
+    <div id="transport">
+      <button id="btn-reset" class="btn ghost" title="Clear the conversation (keeps the cast)">New</button>
+      <button id="btn-toggle" class="btn primary">Start</button>
+    </div>
+  </header>
 
-    <section class="side-section">
-      <div class="side-controls">
-        <button id="btn-toggle" class="primary">Start</button>
-        <button id="btn-reset" title="Clear the conversation (keeps participants)">New conversation</button>
-      </div>
-    </section>
-
-    <section class="side-section">
-      <h2>Participants</h2>
+  <div id="grid">
+    <aside id="rail">
       <ul id="participant-list"></ul>
-      <form id="add-form" autocomplete="off">
+
+      <button id="add-toggle" class="addcard" type="button">＋&nbsp; Add a model to the room</button>
+      <form id="add-form" class="vcard" hidden autocomplete="off">
         <select id="provider-select" aria-label="Provider"></select>
         <input id="model-input" list="model-list" placeholder="model id…" spellcheck="false" aria-label="Model id" />
         <datalist id="model-list"></datalist>
-        <button type="submit">Add</button>
+        <button type="submit" class="btn primary">Add</button>
+        <div id="add-error" class="error-note" role="status"></div>
       </form>
-      <div id="add-error" class="error-note" role="status"></div>
-    </section>
 
-    <section class="side-section">
-      <h2>Settings</h2>
-      <label class="setting">
-        <span>Turn delay</span>
-        <span class="setting-input"><input id="set-delay" type="number" min="0" max="60" step="0.5" /><em>s</em></span>
-      </label>
-      <label class="setting">
-        <span>Auto-pause after</span>
-        <span class="setting-input"><input id="set-cap" type="number" min="1" max="1000" step="1" /><em>turns</em></span>
-      </label>
-      <label class="setting">
-        <span>Max reply</span>
-        <span class="setting-input"><input id="set-tokens" type="number" min="256" max="16000" step="256" /><em>tok</em></span>
-      </label>
-    </section>
-  </aside>
+      <div class="vcard settings-card">
+        <div class="card-k">Settings</div>
+        <label class="setting">
+          <span>Turn delay</span>
+          <span class="setting-input"><input id="set-delay" type="number" min="0" max="60" step="0.5" /><em>s</em></span>
+        </label>
+        <label class="setting">
+          <span>Auto-pause after</span>
+          <span class="setting-input"><input id="set-cap" type="number" min="1" max="1000" step="1" /><em>turns</em></span>
+        </label>
+        <label class="setting">
+          <span>Max reply</span>
+          <span class="setting-input"><input id="set-tokens" type="number" min="256" max="16000" step="256" /><em>tok</em></span>
+        </label>
+      </div>
+    </aside>
 
-  <main id="main">
-    <div id="chat"></div>
-    <form id="composer">
-      <textarea
-        id="composer-input"
-        rows="2"
-        placeholder="Say something — set a topic, make a point, redirect the room…"
-      ></textarea>
-      <button type="submit" class="primary">Send</button>
-    </form>
-  </main>
+    <main id="main">
+      <div id="chat"></div>
+      <form id="composer">
+        <textarea
+          id="composer-input"
+          rows="1"
+          placeholder="Take the floor — set a topic, make a point, redirect the room…"
+        ></textarea>
+        <button type="submit" class="btn primary">Send</button>
+      </form>
+    </main>
+  </div>
 
   <script src="/vendor/marked.js"></script>
   <script src="/app.js"></script>

@@ -7,16 +7,21 @@ const state = {
   pausedReason: null,
   activeSpeakerId: null,
   waitingForHost: false,
+  turnsThisRun: 0,
+  turnCounts: {},
   settings: { turnDelayMs: 2000, maxTokens: 2048, turnCap: 30 },
 };
 
 const els = {
   chat: document.getElementById("chat"),
+  statusChip: document.getElementById("status-chip"),
   statusDot: document.getElementById("status-dot"),
   statusText: document.getElementById("status-text"),
+  turnCounter: document.getElementById("turn-counter"),
   btnToggle: document.getElementById("btn-toggle"),
   btnReset: document.getElementById("btn-reset"),
   participantList: document.getElementById("participant-list"),
+  addToggle: document.getElementById("add-toggle"),
   addForm: document.getElementById("add-form"),
   providerSelect: document.getElementById("provider-select"),
   modelInput: document.getElementById("model-input"),
@@ -89,50 +94,66 @@ function fmtTime(ts) {
 
 function renderStatus() {
   const { running, pausedReason, waitingForHost } = state;
-  els.statusDot.className = `dot ${
-    running ? (waitingForHost ? "waiting" : "running") : "paused"
-  }`;
+  els.statusChip.className = `pill ${running ? (waitingForHost ? "waiting" : "live") : ""}`;
   els.statusText.textContent = running
     ? waitingForHost
-      ? "Waiting for you"
-      : "Running"
+      ? "Floor to you"
+      : "On air"
     : pausedReason && pausedReason !== "paused" && pausedReason !== "reset"
-      ? `Paused — ${pausedReason}`
-      : "Paused";
+      ? `Standby — ${pausedReason}`
+      : "Standby";
   els.btnToggle.textContent = running ? "Pause" : "Start";
   els.btnToggle.classList.toggle("pause-mode", running);
+  renderTurnCounter();
+}
+
+function renderTurnCounter() {
+  const n = state.turnsThisRun;
+  const show = state.running || n > 0;
+  els.turnCounter.hidden = !show;
+  if (show) {
+    els.turnCounter.textContent = `TURN ${String(n).padStart(2, "0")}/${state.settings.turnCap}`;
+  }
 }
 
 function renderParticipants() {
   els.participantList.innerHTML = "";
   for (const p of state.participants) {
+    const speaking = p.id === state.activeSpeakerId;
     const li = document.createElement("li");
-    if (p.id === state.activeSpeakerId) li.classList.add("speaking");
+    li.className = "vcard";
+    if (speaking) li.classList.add("speaking");
+    li.style.setProperty("--voice", p.color);
 
-    const dot = document.createElement("span");
-    dot.className = "p-dot";
-    dot.style.background = p.color;
-
-    const name = document.createElement("span");
-    name.className = "p-name";
-    name.textContent = p.displayName;
-    name.title = p.modelId;
-
-    const model = document.createElement("span");
-    model.className = "p-model";
-    model.textContent = p.modelId;
-
+    const top = document.createElement("div");
+    top.className = "top";
+    const orb = document.createElement("span");
+    orb.className = "orb";
+    const nm = document.createElement("span");
+    nm.className = "nm";
+    nm.textContent = p.displayName;
+    nm.title = p.modelId;
     const remove = document.createElement("button");
     remove.className = "p-remove";
     remove.type = "button";
     remove.textContent = "×";
     remove.setAttribute("aria-label", `Remove ${p.displayName}`);
     remove.onclick = () => api("DELETE", `/api/participants/${p.id}`).catch(() => {});
+    top.append(orb, nm, remove);
 
-    const text = document.createElement("span");
-    text.className = "p-text";
-    text.append(name, model);
-    li.append(dot, text, remove);
+    const id = document.createElement("div");
+    id.className = "id";
+    id.textContent = p.modelId;
+
+    const stat = document.createElement("div");
+    stat.className = "stat";
+    const label = document.createElement("span");
+    label.textContent = speaking ? "Speaking now…" : "Turns taken";
+    const count = document.createElement("b");
+    count.textContent = String(state.turnCounts[p.id] || 0).padStart(2, "0");
+    stat.append(label, count);
+
+    li.append(top, id, stat);
     els.participantList.append(li);
   }
 }
@@ -141,6 +162,7 @@ function renderSettings() {
   els.setDelay.value = state.settings.turnDelayMs / 1000;
   els.setCap.value = state.settings.turnCap;
   els.setTokens.value = state.settings.maxTokens;
+  renderTurnCounter();
 }
 
 function emptyHint() {
@@ -148,11 +170,11 @@ function emptyHint() {
   hint.id = "empty-hint";
   const title = document.createElement("div");
   title.className = "rm-title";
-  title.textContent = "The room is empty.";
+  title.textContent = "The room is quiet.";
   const steps = document.createElement("div");
   steps.className = "steps";
   steps.innerHTML =
-    "01&nbsp;&nbsp;<b>add models</b> from the sidebar — mix providers freely<br>" +
+    "01&nbsp;&nbsp;<b>add models to the room</b> — mix providers freely<br>" +
     "02&nbsp;&nbsp;<b>seed a topic</b> in the composer below<br>" +
     "03&nbsp;&nbsp;<b>press start</b> and watch them talk — interject anytime";
   hint.append(title, steps);
@@ -162,60 +184,78 @@ function emptyHint() {
 function addBubble(message, streaming) {
   document.getElementById("empty-hint")?.remove();
   const pin = isNearBottom();
+  const isFirst = bubbles.size === 0;
 
   const el = document.createElement("div");
-  el.className = "msg";
+  el.className = "m";
   el.dataset.id = message.id;
-  if (message.speakerId === null) el.classList.add("host");
   if (message.error) el.classList.add("error-msg");
   if (streaming) el.classList.add("streaming");
   el.style.setProperty("--voice", message.color);
-
-  const head = document.createElement("div");
-  head.className = "msg-head";
-
-  const dot = document.createElement("span");
-  dot.className = "msg-dot";
-  dot.style.background = message.color;
-  head.append(dot);
-
-  const name = document.createElement("span");
-  name.className = "msg-name";
-  name.style.color = message.color;
-  name.textContent = message.speakerName;
-  head.append(name);
-
-  const p = state.participants.find((x) => x.id === message.speakerId);
-  if (p) {
-    const model = document.createElement("span");
-    model.className = "msg-model";
-    model.textContent = p.modelId;
-    head.append(model);
-  }
-
-  const time = document.createElement("span");
-  time.className = "msg-time";
-  time.textContent = fmtTime(message.ts);
-  head.append(time);
 
   const body = document.createElement("div");
   body.className = "msg-body";
   body.innerHTML = mdToHtml(message.text || "");
 
-  el.append(head, body);
+  if (message.speakerId === null) {
+    // host: raised directive card
+    el.classList.add("host");
+    const topic = document.createElement("div");
+    topic.className = "topic";
+    const k = document.createElement("div");
+    k.className = "k";
+    const label = document.createElement("span");
+    label.textContent = isFirst
+      ? `Topic — set by ${message.speakerName}`
+      : message.speakerName;
+    const meta = document.createElement("span");
+    meta.className = "meta";
+    meta.textContent = fmtTime(message.ts);
+    k.append(label, meta);
+    topic.append(k, body);
+    el.append(topic);
+  } else {
+    const avatar = document.createElement("div");
+    avatar.className = "avatar";
+    avatar.textContent = (message.speakerName[0] || "?").toUpperCase();
+
+    const main = document.createElement("div");
+    main.className = "m-main";
+    const head = document.createElement("div");
+    head.className = "head";
+    const nm = document.createElement("span");
+    nm.className = "nm";
+    nm.textContent = message.speakerName;
+    const meta = document.createElement("span");
+    meta.className = "meta";
+    const p = state.participants.find((x) => x.id === message.speakerId);
+    meta.textContent = p ? `${p.modelId} · ${fmtTime(message.ts)}` : fmtTime(message.ts);
+    head.append(nm, meta);
+    main.append(head, body);
+    el.append(avatar, main);
+  }
+
   els.chat.append(el);
   bubbles.set(message.id, { el, bodyEl: body, raw: message.text || "" });
   if (pin) scrollToBottom();
 }
 
+function recountTurns(messages) {
+  state.turnCounts = {};
+  for (const m of messages) {
+    if (m.speakerId) {
+      state.turnCounts[m.speakerId] = (state.turnCounts[m.speakerId] || 0) + 1;
+    }
+  }
+}
+
 function renderAll(snapshot) {
   Object.assign(state, snapshot);
+  recountTurns(snapshot.messages);
   bubbles.clear();
   els.chat.innerHTML = "";
   if (!snapshot.messages.length) els.chat.append(emptyHint());
-  for (const msg of snapshot.messages) {
-    addBubble(msg, msg.id && snapshot.activeSpeakerId === msg.speakerId && !msg.error && msg === snapshot.messages[snapshot.messages.length - 1] && snapshot.running);
-  }
+  for (const msg of snapshot.messages) addBubble(msg, false);
   renderStatus();
   renderParticipants();
   renderSettings();
@@ -248,6 +288,7 @@ function connect() {
       case "status":
         state.running = event.running;
         state.pausedReason = event.reason;
+        if (event.running) state.turnsThisRun = 0;
         if (!event.running) {
           state.activeSpeakerId = null;
           state.waitingForHost = false;
@@ -283,8 +324,14 @@ function connect() {
 
       case "message_end": {
         const b = bubbles.get(event.id ?? event.message.id);
+        const speakerId = event.message.speakerId;
+        if (speakerId) {
+          state.turnCounts[speakerId] = (state.turnCounts[speakerId] || 0) + 1;
+        }
         state.activeSpeakerId = null;
+        state.turnsThisRun += 1;
         renderParticipants();
+        renderStatus();
         if (b) {
           b.el.classList.remove("streaming");
           b.raw = event.message.text;
@@ -355,6 +402,11 @@ async function loadModels(provider) {
   }
 }
 
+els.addToggle.onclick = () => {
+  els.addForm.hidden = !els.addForm.hidden;
+  if (!els.addForm.hidden) els.modelInput.focus();
+};
+
 els.providerSelect.onchange = () => loadModels(els.providerSelect.value);
 
 els.addForm.onsubmit = async (e) => {
@@ -379,12 +431,13 @@ els.btnToggle.onclick = async () => {
       action: state.running ? "pause" : "start",
     });
   } catch (err) {
+    els.addForm.hidden = false;
     els.addError.textContent = err.message;
   }
 };
 
 els.btnReset.onclick = async () => {
-  if (!confirm("Clear the conversation? (Participants are kept; the transcript file is saved.)")) return;
+  if (!confirm("Clear the conversation? (The cast is kept; the transcript file is saved.)")) return;
   await api("POST", "/api/control", { action: "reset" }).catch(() => {});
 };
 
@@ -393,6 +446,7 @@ els.composer.onsubmit = async (e) => {
   const text = els.composerInput.value.trim();
   if (!text) return;
   els.composerInput.value = "";
+  els.composerInput.style.height = "";
   await api("POST", "/api/message", { text }).catch(() => {});
 };
 
@@ -401,6 +455,13 @@ els.composerInput.addEventListener("keydown", (e) => {
     e.preventDefault();
     els.composer.requestSubmit();
   }
+});
+
+// grow the composer with its content (capped in CSS)
+els.composerInput.addEventListener("input", () => {
+  const t = els.composerInput;
+  t.style.height = "";
+  t.style.height = `${t.scrollHeight}px`;
 });
 
 function bindSetting(input, key, transform) {
