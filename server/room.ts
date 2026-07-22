@@ -16,16 +16,17 @@ import {
 import { streamReply } from "./providers";
 
 const HOST_NAME = process.env.HOST_NAME || "Host";
-const HOST_COLOR = "#8fa3b8";
+const HOST_COLOR = "oklch(0.82 0.02 255)";
+// Voice hues at uniform perceived lightness (OKLCH) so no speaker shouts.
 const COLORS = [
-  "#5b8dd9",
-  "#c97b4a",
-  "#7bc47f",
-  "#c95b5b",
-  "#9b7bd4",
-  "#d4b45b",
-  "#5bc4c4",
-  "#d47bb0",
+  "oklch(0.72 0.11 250)", // blue
+  "oklch(0.74 0.11 60)", // amber
+  "oklch(0.73 0.11 155)", // green
+  "oklch(0.70 0.12 20)", // red
+  "oklch(0.72 0.10 300)", // violet
+  "oklch(0.76 0.10 100)", // citron
+  "oklch(0.73 0.10 200)", // cyan
+  "oklch(0.72 0.10 340)", // pink
 ];
 
 export interface Settings {

@@ -129,14 +129,10 @@ function renderParticipants() {
     remove.setAttribute("aria-label", `Remove ${p.displayName}`);
     remove.onclick = () => api("DELETE", `/api/participants/${p.id}`).catch(() => {});
 
-    li.append(dot, name, model);
-    if (p.id === state.activeSpeakerId) {
-      const tag = document.createElement("span");
-      tag.className = "speaking-tag";
-      tag.textContent = "speaking";
-      li.append(tag);
-    }
-    li.append(remove);
+    const text = document.createElement("span");
+    text.className = "p-text";
+    text.append(name, model);
+    li.append(dot, text, remove);
     els.participantList.append(li);
   }
 }
@@ -150,8 +146,16 @@ function renderSettings() {
 function emptyHint() {
   const hint = document.createElement("div");
   hint.id = "empty-hint";
-  hint.textContent =
-    "Add one or more models, type a topic below, then press Start.";
+  const title = document.createElement("div");
+  title.className = "rm-title";
+  title.textContent = "The room is empty.";
+  const steps = document.createElement("div");
+  steps.className = "steps";
+  steps.innerHTML =
+    "01&nbsp;&nbsp;<b>add models</b> from the sidebar — mix providers freely<br>" +
+    "02&nbsp;&nbsp;<b>seed a topic</b> in the composer below<br>" +
+    "03&nbsp;&nbsp;<b>press start</b> and watch them talk — interject anytime";
+  hint.append(title, steps);
   return hint;
 }
 
@@ -165,10 +169,15 @@ function addBubble(message, streaming) {
   if (message.speakerId === null) el.classList.add("host");
   if (message.error) el.classList.add("error-msg");
   if (streaming) el.classList.add("streaming");
-  el.style.borderLeftColor = message.color;
+  el.style.setProperty("--voice", message.color);
 
   const head = document.createElement("div");
   head.className = "msg-head";
+
+  const dot = document.createElement("span");
+  dot.className = "msg-dot";
+  dot.style.background = message.color;
+  head.append(dot);
 
   const name = document.createElement("span");
   name.className = "msg-name";

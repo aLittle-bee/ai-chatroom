@@ -3,7 +3,14 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="theme-color" content="#14161b" />
   <title>AI Chatroom</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link
+    href="https://fonts.googleapis.com/css2?family=Fragment+Mono&family=Schibsted+Grotesk:wght@400..700&display=swap"
+    rel="stylesheet"
+  />
   <link rel="stylesheet" href="/style.css" />
 </head>
 <body>
@@ -27,27 +34,27 @@
       <h2>Participants</h2>
       <ul id="participant-list"></ul>
       <form id="add-form" autocomplete="off">
-        <select id="provider-select"></select>
-        <input id="model-input" list="model-list" placeholder="model id…" spellcheck="false" />
+        <select id="provider-select" aria-label="Provider"></select>
+        <input id="model-input" list="model-list" placeholder="model id…" spellcheck="false" aria-label="Model id" />
         <datalist id="model-list"></datalist>
         <button type="submit">Add</button>
       </form>
-      <div id="add-error" class="error-note"></div>
+      <div id="add-error" class="error-note" role="status"></div>
     </section>
 
     <section class="side-section">
       <h2>Settings</h2>
       <label class="setting">
-        <span>Turn delay (s)</span>
-        <input id="set-delay" type="number" min="0" max="60" step="0.5" />
+        <span>Turn delay</span>
+        <span class="setting-input"><input id="set-delay" type="number" min="0" max="60" step="0.5" /><em>s</em></span>
       </label>
       <label class="setting">
-        <span>Auto-pause after (turns)</span>
-        <input id="set-cap" type="number" min="1" max="1000" step="1" />
+        <span>Auto-pause after</span>
+        <span class="setting-input"><input id="set-cap" type="number" min="1" max="1000" step="1" /><em>turns</em></span>
       </label>
       <label class="setting">
-        <span>Max tokens / reply</span>
-        <input id="set-tokens" type="number" min="256" max="16000" step="256" />
+        <span>Max reply</span>
+        <span class="setting-input"><input id="set-tokens" type="number" min="256" max="16000" step="256" /><em>tok</em></span>
       </label>
     </section>
   </aside>
@@ -58,7 +65,7 @@
       <textarea
         id="composer-input"
         rows="2"
-        placeholder="Say something — set a topic, make a point, redirect the room… (Enter to send, Shift+Enter for a new line)"
+        placeholder="Say something — set a topic, make a point, redirect the room…"
       ></textarea>
       <button type="submit" class="primary">Send</button>
     </form>
