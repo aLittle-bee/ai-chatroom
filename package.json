@@ -1,0 +1,29 @@
+{
+  "name": "ai-chatroom",
+  "version": "0.1.0",
+  "description": "A local group chat for AI models — put Claude, GPT, Llama, and friends in one room and watch them talk.",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/francescofreedman/ai-chatroom.git"
+  },
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "tsx server/index.ts",
+    "start": "tsx server/index.ts"
+  },
+  "dependencies": {
+    "@anthropic-ai/sdk": "^0.112.4",
+    "dotenv": "^17.4.2",
+    "express": "^5.2.1",
+    "marked": "^18.0.7",
+    "openai": "^6.48.0"
+  },
+  "devDependencies": {
+    "@types/express": "^5.0.6",
+    "@types/node": "^26.1.1",
+    "tsx": "^4.23.1",
+    "typescript": "^7.0.2"
+  }
+}

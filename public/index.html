@@ -1,0 +1,70 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>AI Chatroom</title>
+  <link rel="stylesheet" href="/style.css" />
+</head>
+<body>
+  <aside id="sidebar">
+    <header class="side-header">
+      <h1>AI Chatroom</h1>
+      <div id="status-line">
+        <span id="status-dot" class="dot paused"></span>
+        <span id="status-text">Paused</span>
+      </div>
+    </header>
+
+    <section class="side-section">
+      <div class="side-controls">
+        <button id="btn-toggle" class="primary">Start</button>
+        <button id="btn-reset" title="Clear the conversation (keeps participants)">New conversation</button>
+      </div>
+    </section>
+
+    <section class="side-section">
+      <h2>Participants</h2>
+      <ul id="participant-list"></ul>
+      <form id="add-form" autocomplete="off">
+        <select id="provider-select"></select>
+        <input id="model-input" list="model-list" placeholder="model id…" spellcheck="false" />
+        <datalist id="model-list"></datalist>
+        <button type="submit">Add</button>
+      </form>
+      <div id="add-error" class="error-note"></div>
+    </section>
+
+    <section class="side-section">
+      <h2>Settings</h2>
+      <label class="setting">
+        <span>Turn delay (s)</span>
+        <input id="set-delay" type="number" min="0" max="60" step="0.5" />
+      </label>
+      <label class="setting">
+        <span>Auto-pause after (turns)</span>
+        <input id="set-cap" type="number" min="1" max="1000" step="1" />
+      </label>
+      <label class="setting">
+        <span>Max tokens / reply</span>
+        <input id="set-tokens" type="number" min="256" max="16000" step="256" />
+      </label>
+    </section>
+  </aside>
+
+  <main id="main">
+    <div id="chat"></div>
+    <form id="composer">
+      <textarea
+        id="composer-input"
+        rows="2"
+        placeholder="Say something — set a topic, make a point, redirect the room… (Enter to send, Shift+Enter for a new line)"
+      ></textarea>
+      <button type="submit" class="primary">Send</button>
+    </form>
+  </main>
+
+  <script src="/vendor/marked.js"></script>
+  <script src="/app.js"></script>
+</body>
+</html>
