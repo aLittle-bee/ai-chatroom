@@ -46,7 +46,7 @@ ceremony. One Express server, one page of vanilla JS, and a turn loop.
 Requires Node 20+.
 
 ```bash
-git clone https://github.com/francescofreedman/ai-chatroom.git
+git clone https://github.com/aLittle-bee/ai-chatroom.git
 cd ai-chatroom
 npm install
 cp .env.example .env   # add your API key(s) — any subset works
