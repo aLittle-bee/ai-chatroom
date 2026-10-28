@@ -165,7 +165,7 @@ export class Room extends EventEmitter {
       this.settings.maxTokens = clamp(patch.maxTokens, 256, 16_000);
     }
     if (patch.turnCap !== undefined) {
-      this.settings.turnCap = clamp(patch.turnCap, 1, 1_000);
+      this.settings.turnCap = clamp(patch.turnCap, 1, 1_000_000_000_000);
     }
     this.broadcast({ type: "settings", settings: this.settings });
     return this.settings;
